@@ -1,19 +1,24 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
-const connection = mysql.createConnection({
-  host: 'sql12.freesqldatabase.com',
-  user: 'sql12785324',
-  password: 'tkIUpEQZvY',
-  database: 'sql12785324',
-  port: 3306
-});
+let connection; // cached connection
 
-connection.connect((err) => {
-  if (err) {
-    console.error('Database connection failed: ' + err.stack);
-    return;
+async function getConnection() {
+  if (connection && connection.connection._closing === false) {
+    // existing open connection, reuse it
+    return connection;
   }
-  console.log('Connected to freesqldatabase.com MySQL database');
-});
 
-module.exports = connection;
+  connection = await mysql.createConnection({
+    host: 'sql12.freesqldatabase.com',
+    user: 'sql12785324',
+    password: 'tkIUpEQZvY',
+    database: 'sql12785324',
+    port: 3306,
+    connectTimeout: 10000 // 10 seconds
+  });
+
+  console.log('Connected to freesqldatabase.com MySQL database');
+  return connection;
+}
+
+module.exports = getConnection;
